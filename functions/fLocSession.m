@@ -8,20 +8,32 @@ classdef fLocSession
         sequence  % session fLocSequence object
         responses % behavioral response data structure
         parfiles  % paths to vistasoft-compatible parfiles
-    end
-    
-    properties (Hidden)
         stim_set  % stimulus set/s (1 = standard, 2 = alternate, 3 = both)
         task_num  % task number (1 = 1-back, 2 = 2-back, 3 = oddball)
-        input     % device number of input used for resonse collection
-        keyboard  % device number of native computer keyboard
+        runs_done % how many runs completed so far?
+        debug     % debug mode? if 1, do just small num trials.
         hit_cnt   % number of hits per run
         fa_cnt    % number of false alarms per run
     end
     
+    properties (Hidden)
+        input     % device number of input used for resonse collection
+        keyboard  % device number of native computer keyboard
+    end
+    
     properties (Constant)
         count_down = 12; % pre-experiment countdown (secs)
-        stim_size = 768; % size to display images in pixels
+
+        % MODIFIED BY MMH 2024 - WE CAN ADJUST STIM SIZE IN DEGREES
+        % these are actual measurements of screen size/distance in our
+        % setup. may need to change for different recording setups.
+        view_dist_inches = 48; % TODO: CHECK THESE VALUES AT SCANNER
+        screen_height_inches = 12;
+        % desired size in degrees 
+        % (this is the whole image height, top to bottom).
+        stim_size_dva = 10;
+%         stim_size_dva = 7.125;
+%         stim_size = 768; % size to display images in pixels
     end
     
     properties (Constant, Hidden)
@@ -34,21 +46,24 @@ classdef fLocSession
     end
     
     properties (Dependent)
-        id        % session-specific id string
-        task_name % descriptor for each task number
+        id                  % session-specific id string
+        task_name           % descriptor for each task number
+        screen_height_dva   % height of screen in degrees
+        hit_rate            % proportion of task probes detected in each run
+        total_run_dur       % total run dur (s) including countdown
     end
     
     properties (Dependent, Hidden)
-        hit_rate     % proportion of task probes detected in each run
         instructions % task-specific instructions for participant
     end
     
     methods
         
         % class constructor
-        function session = fLocSession(name, trigger, stim_set, num_runs, task_num)
+        function session = fLocSession(name, trigger, stim_set, num_runs, task_num, debug)
             session.name = deblank(name);
             session.trigger = trigger;
+            session.debug = debug;
             if nargin < 3
                 session.stim_set = 3;
             else
@@ -67,6 +82,7 @@ classdef fLocSession
             session.date = date;
             session.hit_cnt = zeros(1, session.num_runs);
             session.fa_cnt = zeros(1, session.num_runs);
+            session.runs_done = 0; % count how many runs done so far
         end
         
         % get session-specific id string
@@ -74,6 +90,9 @@ classdef fLocSession
             par_str = [session.name '_' session.date];
             exp_str = [session.task_name '_' num2str(session.num_runs) 'runs'];
             id = [par_str '_' exp_str];
+            if session.debug==1
+                id = [id '_DEBUG'];
+            end
         end
         
         % get name of task
@@ -81,10 +100,20 @@ classdef fLocSession
             task_name = session.task_names{session.task_num};
         end
         
+        % compute screen height in degrees visual angle
+        % added by MMH 2024
+        function screen_height_dva = get.screen_height_dva(session)
+            screen_height_dva = (2 * atan2(session.screen_height_inches/2, session.view_dist_inches))* (180/pi);
+        end
+
         % get hit rate for task
         function hit_rate = get.hit_rate(session)
             num_probes = sum(session.sequence.task_probes);
             hit_rate = session.hit_cnt ./ num_probes;
+        end
+
+        function total_run_dur = get.total_run_dur(session)
+            total_run_dur = session.sequence.run_dur + session.count_down;
         end
         
         % get instructions for participant given task
@@ -107,11 +136,16 @@ classdef fLocSession
                 seq = fLocSequence(session.stim_set, session.num_runs, session.task_num);
                 seq = make_runs(seq);
                 mkdir(fileparts(fpath));
+                fprintf('saving to %s\n', fpath)
                 save(fpath, 'seq', '-v7.3');
+                session.sequence = seq;
+                session = write_parfiles(session);
             else
+                fprintf('loading from %s\n', fpath)
                 load(fpath);
+                session.sequence = seq;
             end
-            session.sequence = seq;
+            
         end
         
         % register input devices
@@ -140,7 +174,17 @@ classdef fLocSession
             resp_keys = {}; resp_press = zeros(length(stim_names), 1);
             % setup screen and load all stimuli in run
             [window_ptr, center] = do_screen;
-            center_x = center(1); center_y = center(2); s = session.stim_size / 2;
+
+            % now that window is open, we can get exact pixel size to draw
+            % stimuli for our desired DVA.
+            [screen_width_pix, screen_height_pix] = Screen('WindowSize', window_ptr);
+            % then figure out pixel size
+            stim_size_pix = session.stim_size_dva * ...
+                screen_height_pix/session.screen_height_dva;
+            s = stim_size_pix / 2;
+%             disp([screen_height_dva, screen_height_pix, stim_size_pix])
+
+            center_x = center(1); center_y = center(2); 
             stim_rect = [center_x - s center_y - s center_x + s center_y + s];
             img_ptrs = [];
             for ii = 1:length(stim_names)
@@ -190,6 +234,9 @@ classdef fLocSession
             % main display loop
             start_time = GetSecs;
             for ii = 1:length(stim_names)
+                if (session.debug==1) && (ii>(session.sequence.stim_per_block*2))
+                    continue
+                end
                 % display blank screen if baseline and image if stimulus
                 if strcmp(stim_names{ii}, 'baseline')
                     Screen('FillRect', window_ptr, bcol);
@@ -212,14 +259,34 @@ classdef fLocSession
                     Screen('Flip', window_ptr);
                 end
                 resp_keys{ii} = ii_keys;
-                resp_press(ii) = min(ii_press);
+                % MMH 2024: the ii_press var is tracking whether the
+                % responses field was EMPTY (is_empty from record_keys)
+                % so we want to record if the field was ever NOT empty
+                any_not_empty = any(ii_press==0);
+                resp_press(ii) = any_not_empty;
+%                 resp_press(ii) = min(ii_press);
             end
-            % store responses
+
+            % modified MMH 2024: 
+            % increment run counter
+            session.runs_done  = session.runs_done + 1;
+
+            % modified MMH 2024: 
+            % save data from this run BEFORE showing last screen (in case
+            % something goes wrong with exit)
+            session_dir = fullfile(session.exp_dir, 'data', session.id);
+            session_fpath = fullfile(session_dir, [session.id '_fLocSession.mat']);
+            fprintf('saving to %s\n', session_fpath);
+            save(session_fpath, 'session', '-v7.3');
+
+            % also saving a backup of responses for this run.
             session.responses(run_num).keys = resp_keys;
             session.responses(run_num).press = resp_press;
-            fname = [session.id '_backup_run' num2str(run_num) '.mat'];
-            fpath = fullfile(session.exp_dir, 'data', session.id, fname);
-            save(fpath, 'resp_keys', 'resp_press', '-v7.3');
+            backup_fpath = fullfile(session_dir, [session.id '_backup_run' num2str(run_num) '.mat']);
+            fprintf('saving to %s\n', backup_fpath);
+            save(backup_fpath, 'resp_keys', 'resp_press', '-v7.3');
+
+
             % analyze response data and display performance
             session = score_task(session, run_num);
             num_probes = num2str(sum(session.sequence.task_probes(:, run_num)));
@@ -262,7 +329,9 @@ classdef fLocSession
             session.parfiles = cell(1, session.num_runs);
             % list of conditions and plotting colors
             conds = ['Baseline' session.sequence.stim_conds];
-            cols = {[1 1 1] [0 0 1] [0 0 0] [1 0 0] [.8 .8 0] [0 1 0]};
+%             cols = {[1 1 1] [0 0 1] [0 0 0] [1 0 0] [.8 .8 0] [0 1 0]};
+            % MMH added an additional color here
+            cols = {[1 1 1] [0 0 1] [0 0 0] [1 0 0] [.8 .8 0] [0 1 0] [.8 0 .8]};
             % write information about each block on a separate line
             for rr = 1:session.num_runs
                 block_onsets = session.sequence.block_onsets(:, rr);
@@ -271,6 +340,7 @@ classdef fLocSession
                 cond_cols = cols(block_conds + 1);
                 fname = [session.id '_fLoc_run' num2str(rr) '.par'];
                 fpath = fullfile(session.exp_dir, 'data', session.id, fname);
+%                 fprintf('saving to %s\n', fpath)
                 fid = fopen(fpath, 'w');
                 for bb = 1:length(block_onsets)
                     fprintf(fid, '%d \t %d \t', block_onsets(bb), block_conds(bb));

@@ -8,14 +8,14 @@ classdef fLocSequence
     end
     
     properties (Hidden)
-        stim_set     % stimulus set/s (1 = standard, 2 = alternate, 3 = both)
+        stim_set     % stimulus set/s (1 = standard, 2 = alternate, 3 = both, 4 = food, 5 = food and scrambled)
         task_num     % task number (1 = 1-back, 2 = 2-back, 3 = oddball)
         block_onsets % block onsets relative to beginning of run (seconds)
         block_conds  % block conditions labels
     end
     
     properties (Constant)
-        stim_conds = {'Bodies' 'Characters' 'Faces' 'Objects' 'Places'};
+%         stim_conds = {'Bodies' 'Characters' 'Faces' 'Objects' 'Places'};
         stim_per_block = 12;   % number of stimuli in a block
         stim_duty_cycle = 0.5; % duration of stimulus duty cycle (s)
     end
@@ -23,16 +23,20 @@ classdef fLocSequence
     properties (Constant, Hidden)
         stim_set1 = {'body' 'word' 'adult' 'car' 'house'};
         stim_set2 = {'limb' 'number' 'child' 'instrument' 'corridor'};
-        stim_per_set = 144;
+        stim_set4 = {'food','body' 'word' 'adult', 'house'};
+        stim_set5 = {'food','body','adult','car','house','scrambled'};
+%         stim_per_set = 144;
+        stim_per_set = 80;
         task_names = {'1back' '2back' 'oddball'};
         task_freq = 0.5;
     end
     
     properties (Dependent)
-        task_name % descriptor for each task number
-        run_dur   % run duration (seconds)
-        stim_dur  % stimulus duration (seconds)
-        isi_dur   % interstimulus interval duration (seconds)
+        task_name   % descriptor for each task number
+        run_dur     % run duration (seconds)
+        stim_dur    % stimulus duration (seconds)
+        isi_dur     % interstimulus interval duration (seconds)
+        stim_conds  % set of stim conds (nice names)
     end
     
     properties (Dependent, Hidden)
@@ -59,6 +63,7 @@ classdef fLocSequence
             else
                 seq.task_num = task_num;
             end
+
         end
         
         % get name of task
@@ -82,6 +87,25 @@ classdef fLocSequence
             end
         end
         
+        % MODIFIED BY MMH 2024: CHANGE STIM CONDS TO MATCH STIM SET
+        % these are the nicer names of each stim set
+        function stim_conds = get.stim_conds(seq)
+                   
+            switch seq.stim_set
+                case 1
+                    stim_conds = {'Bodies' 'Characters' 'Faces' 'Objects' 'Places'};
+                case 2
+                    stim_conds = {'Bodies' 'Characters' 'Faces' 'Objects' 'Places'};
+                case 3
+                    stim_conds = {'Bodies' 'Characters' 'Faces' 'Objects' 'Places'};
+                case 4
+                    stim_conds = {'Food', 'Bodies' 'Characters' 'Faces', 'Places'};
+                case 5
+                    stim_conds = {'Food', 'Bodies', 'Faces', 'Places', 'Objects', 'Scrambled'};
+                
+            end
+        end
+
         % get stimulus duration given ISI
         function stim_dur = get.stim_dur(seq)
             stim_dur = seq.stim_duty_cycle - seq.isi_dur;
@@ -104,6 +128,10 @@ classdef fLocSequence
                     cat_iters = ceil(seq.num_runs / 2);
                     run_sets = repmat(run_sets, cat_iters, 1);
                     run_sets = run_sets(1:seq.num_runs, :);
+                case 4
+                    run_sets = repmat(seq.stim_set4, seq.num_runs, 1);
+                case 5
+                    run_sets = repmat(seq.stim_set5, seq.num_runs, 1);
                 otherwise
                     error('Invalid stim_set argument.');
             end
