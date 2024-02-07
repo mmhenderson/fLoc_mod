@@ -74,7 +74,13 @@ classdef fLocSequence
         % get run duration given stimulus duty cycle
         function run_dur = get.run_dur(seq)
             block_dur = seq.stim_per_block * seq.stim_duty_cycle;
-            blocks_per_run = 1 + (1 + length(seq.stim_conds)) ^ 2 + 1;
+            if length(seq.stim_conds)<=5
+                blocks_per_run = 1 + (1 + length(seq.stim_conds)) ^ 2 + 1;
+            else
+                % MMH 2024
+                % adjusting this, max of 6 reps per condition per run
+                blocks_per_run = 1 + (1 + length(seq.stim_conds)) * 6 + 1;
+            end
             run_dur = block_dur * blocks_per_run;
         end
         
