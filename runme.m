@@ -40,7 +40,7 @@ prompt = {'Subject Initials',...
 
 dlgtitle = 'Enter Run Parameters';
 dims = [1 35];
-definput = {'XX','0','5','1','4','1','0'};
+definput = {'XX','0','4','1','4','1','0'};
 answer = inputdlg(prompt,dlgtitle,dims,definput);
 name = answer{1};  
 trigger = str2double(answer{2});
