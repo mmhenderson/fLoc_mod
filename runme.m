@@ -17,7 +17,7 @@ function runme()
 % Anthony Stigliani (astiglia@stanford.edu)
 % Department of Psychology, Stanford University
 
-% Modified by MMH 2024 (mmhender@cmu.edu)
+% Modified by MMH in 2024 (mmhender@cmu.edu)
 
 
 % skipping sync tests for debugging (set to 0 when running real)
