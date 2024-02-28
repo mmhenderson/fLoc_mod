@@ -19,9 +19,12 @@ function runme()
 
 % Modified by MMH 2024 (mmhender@cmu.edu)
 
+
 % skipping sync tests for debugging (set to 0 when running real)
 Screen('Preference', 'SkipSyncTests', 1);
 % Screen('Preference', 'SkipSyncTests', 0);
+
+clear all; setenv('WAYLAND_DISPLAY'); Screen('Preference','ConserveVRAM', 2^19);
 
 %% add paths and check inputs
 
