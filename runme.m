@@ -24,7 +24,7 @@ function runme()
 Screen('Preference', 'SkipSyncTests', 1);
 % Screen('Preference', 'SkipSyncTests', 0);
 
-clear all; setenv('WAYLAND_DISPLAY'); Screen('Preference','ConserveVRAM', 2^19);
+% clear all; setenv('WAYLAND_DISPLAY'); Screen('Preference','ConserveVRAM', 2^19);
 
 %% add paths and check inputs
 
