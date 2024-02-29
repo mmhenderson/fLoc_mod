@@ -34,6 +34,13 @@ classdef fLocSession
         stim_size_dva = 10;
 %         stim_size_dva = 7.125;
 %         stim_size = 768; % size to display images in pixels
+        % MMH added this, so we can easily change key for trigger
+        % TODO: check keys to use at BRIDGE
+        trigger_key = 't';
+        escape_key = KbName('escape');
+        space_key = KbName('space');
+        % Note the escape and space keys are converted to numeric indices
+        % this is so we don't have to worry about doing capitalization
     end
     
     properties (Constant, Hidden)
@@ -88,7 +95,11 @@ classdef fLocSession
         % get session-specific id string
         function id = get.id(session)
             par_str = [session.name '_' session.date];
-            exp_str = [session.task_name '_' num2str(session.num_runs) 'runs'];
+            % Modified MMH 2024: putting the "stim set" into the save 
+            % name, because sometimes we might want to run diff sets on
+            % same day and make different files for each. 
+%             exp_str = [session.task_name '_' num2str(session.num_runs) 'runs'];
+            exp_str = ['stimset' num2str(session.stim_set) '_' session.task_name '_' num2str(session.num_runs) 'runs'];
             id = [par_str '_' exp_str];
             if session.debug==1
                 id = [id '_DEBUG'];
@@ -202,14 +213,14 @@ classdef fLocSession
                 Screen('Flip', window_ptr);
                 DrawFormattedText(window_ptr, session.instructions, 'center', 'center', tcol);
                 Screen('Flip', window_ptr);
-                get_key('g', session.keyboard);
+                get_key(session.trigger_key, session.keyboard, session.escape_key);
             elseif session.trigger == 1
                 Screen('FillRect', window_ptr, bcol);
                 Screen('Flip', window_ptr);
                 DrawFormattedText(window_ptr, session.instructions, 'center', 'center', tcol); % 'flipHorizontal', 1);
                 Screen('Flip', window_ptr);
                 while 1
-                    get_key('g', session.keyboard);
+                    get_key(session.trigger_key, session.keyboard, session.escape_key);
                     [status, ~] = start_scan;
                     if status == 0
                         break
@@ -230,10 +241,19 @@ classdef fLocSession
                     cnt = cnt - 1;
                 end
                 rem_time = cnt_time - GetSecs;
+                % MMH 2024 adding this: allow the user to easily escape
+                % with escape key if desired
+                [key_is_down, ~, key_code] = KbCheck(session.keyboard);
+                key_index = find(key_code);
+                if ismember(session.escape_key, key_index)
+                    escape_response()
+                end
             end
             % main display loop
             start_time = GetSecs;
             for ii = 1:length(stim_names)
+                % MMH 2024 added this: if debug=True, we stop early (for
+                % testing the code).
                 if (session.debug==1) && (ii>(session.sequence.stim_per_block*2))
                     continue
                 end
@@ -248,13 +268,13 @@ classdef fLocSession
                 Screen('Flip', window_ptr);
                 % collect responses
                 ii_press = []; ii_keys = [];
-                [keys, ie] = record_keys(start_time + (ii - 1) * sdc, stim_dur, k);
+                [keys, ie] = record_keys(start_time + (ii - 1) * sdc, stim_dur, k, session.escape_key);
                 ii_keys = [ii_keys keys]; ii_press = [ii_press ie];
                 % display ISI if necessary
                 if isi_dur > 0
                     Screen('FillRect', window_ptr, bcol);
                     draw_fixation(window_ptr, center, fcol);
-                    [keys, ie] = record_keys(start_time + (ii - 1) * sdc + stim_dur, isi_dur, k);
+                    [keys, ie] = record_keys(start_time + (ii - 1) * sdc + stim_dur, isi_dur, k, session.escape_key);
                     ii_keys = [ii_keys keys]; ii_press = [ii_press ie];
                     Screen('Flip', window_ptr);
                 end
@@ -300,7 +320,9 @@ classdef fLocSession
             score_str = [hit_str '\n' fa_str];
             DrawFormattedText(window_ptr, score_str, 'center', 'center', tcol);
             Screen('Flip', window_ptr);
-            get_key('g', session.keyboard);
+            % MMH changed this: can exit with trigger, space bar, esc
+            get_key([session.trigger_key, KbName(session.escape_key), KbName(session.space_key)], ...
+                session.keyboard, session.escape_key);
             ShowCursor;
             Screen('CloseAll');
         end

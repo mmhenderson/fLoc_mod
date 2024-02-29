@@ -23,20 +23,20 @@ classdef fLocSequence
     properties (Constant, Hidden)
         stim_set1 = {'body' 'word' 'adult' 'car' 'house'};
         stim_set2 = {'limb' 'number' 'child' 'instrument' 'corridor'};
-        stim_set4 = {'food','body' 'word' 'adult', 'house'};
-        stim_set5 = {'food','body','adult','car','house','scrambled'};
-%         stim_per_set = 144;
-        stim_per_set = 80;
+        stim_set4 = {'food','body','word','adult','house'};
+%         stim_set5 = {'food','body','adult','house','car','scrambled'};
+        stim_set5 = {'car','instrument','scrambled','scrambled'};
         task_names = {'1back' '2back' 'oddball'};
         task_freq = 0.5;
     end
     
     properties (Dependent)
-        task_name   % descriptor for each task number
-        run_dur     % run duration (seconds)
-        stim_dur    % stimulus duration (seconds)
-        isi_dur     % interstimulus interval duration (seconds)
-        stim_conds  % set of stim conds (nice names)
+        task_name    % descriptor for each task number
+        run_dur      % run duration (seconds)
+        stim_dur     % stimulus duration (seconds)
+        isi_dur      % interstimulus interval duration (seconds)
+        stim_conds   % set of stim conds (nice names)
+        stim_per_set % number of stims to use per set
     end
     
     properties (Dependent, Hidden)
@@ -70,6 +70,18 @@ classdef fLocSequence
         function task_name = get.task_name(seq)
             task_name = seq.task_names{seq.task_num};
         end
+
+        % Modified MMH 2024: change num stimuli based on stim set
+        function stim_per_set = get.stim_per_set(seq)
+            if (seq.stim_set==4)
+                % this one has food included, which has max 80 images
+                stim_per_set = 80;
+            else
+                % if food not included, use all available (144)
+                stim_per_set = 144;
+            end
+        end
+            
         
         % get run duration given stimulus duty cycle
         function run_dur = get.run_dur(seq)
@@ -105,10 +117,12 @@ classdef fLocSequence
                 case 3
                     stim_conds = {'Bodies' 'Characters' 'Faces' 'Objects' 'Places'};
                 case 4
-                    stim_conds = {'Food', 'Bodies' 'Characters' 'Faces', 'Places'};
+%                     stim_set4 = {'food','body','word','adult','house'};
+                    stim_conds = {'Food', 'Bodies', 'Characters', 'Faces', 'Places'};
                 case 5
-                    stim_conds = {'Food', 'Bodies', 'Faces', 'Places', 'Objects', 'Scrambled'};
-                
+%                     stim_set5 = {'car','instrument','scrambled','scrambled'};
+                    stim_conds = {'Objects', 'Objects', 'Scrambled', 'Scrambled'}; 
+%                     stim_conds = {'Food', 'Bodies', 'Faces', 'Places', 'Objects', 'Scrambled'};                 
             end
         end
 

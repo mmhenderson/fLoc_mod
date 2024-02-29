@@ -9,7 +9,7 @@ function runme()
 %   2) trigger -- option to trigger scanner (0 = no, 1 = yes)
 %   3) stim_set -- stimulus set (1 = standard, 2 = alternate, 3 = both)
 %   4) num_runs -- number of runs (stimuli repeat after 2 runs/set)
-%   5) task_num -- which task (1 = 1-back, 2 = 2-back, 3 =
+%   5) task_num --  which task (1 = 1-back, 2 = 2-back, 3 =
 %   oddball)
 %   6) start_run -- run number to begin with (if sequence is interrupted)
 %
@@ -19,6 +19,13 @@ function runme()
 
 % Modified by MMH in 2024 (mmhender@cmu.edu)
 
+% Timing: 
+% If stim_set = 4 (for food, face, etc mapping)
+%   240 seconds (4:00)
+% If stim_set = 5 (for LOC mapping)
+%   174 seconds (2:54)
+
+clear 
 
 % skipping sync tests for debugging (set to 0 when running real)
 Screen('Preference', 'SkipSyncTests', 1);
@@ -35,7 +42,7 @@ addpath('functions');
 
 prompt = {'Subject Initials',...
         'Trigger scanner? (0 = no, 1 = yes)',...
-        'Which stimulus set? (1 = standard, 2 = alternate, 3 = both, 4 = food, 5 = food + scrambled)',...
+        'Which stimulus set? (1 = standard, 2 = alternate, 3 = both, 4 = food, 5 = object + scrambled)',...
         'Which task? (1 = 1-back, 2 = 2-back, 3 = oddball)',...
         'How many runs?',...
         'This run number?',...
@@ -43,7 +50,7 @@ prompt = {'Subject Initials',...
 
 dlgtitle = 'Enter Run Parameters';
 dims = [1 35];
-definput = {'XX','0','4','1','4','1','0'};
+definput = {'XX','0','5','1','4','1','0'};
 answer = inputdlg(prompt,dlgtitle,dims,definput);
 name = answer{1};  
 trigger = str2double(answer{2});
