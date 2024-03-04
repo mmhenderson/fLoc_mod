@@ -14,9 +14,9 @@ classdef fLocSession
         debug     % debug mode? if 1, do just small num trials.
         hit_cnt   % number of hits per run
         fa_cnt    % number of false alarms per run
-    end
-    
-    properties (Hidden)
+%     end
+%     
+%     properties (Hidden)
         input     % device number of input used for resonse collection
         keyboard  % device number of native computer keyboard
     end
@@ -27,13 +27,14 @@ classdef fLocSession
         % MODIFIED BY MMH 2024 - WE CAN ADJUST STIM SIZE IN DEGREES
         % these are actual measurements of screen size/distance in our
         % setup. may need to change for different recording setups.
-        view_dist_inches = 48; % TODO: CHECK THESE VALUES AT SCANNER
-        screen_height_inches = 12;
+        % these measures are from JP, for BOLDscreen at UW Prisma
+        view_dist_inches = 120 / 2.54; 
+        screen_height_inches = 39.29 / 2.54;
         % desired size in degrees 
         % (this is the whole image height, top to bottom).
         stim_size_dva = 10;
-%         stim_size_dva = 7.125;
 %         stim_size = 768; % size to display images in pixels
+
         % MMH added this, so we can easily change key for trigger
         % TODO: check keys to use at BRIDGE
         trigger_key = 't';
@@ -146,7 +147,9 @@ classdef fLocSession
             if ~exist(fpath, 'file')
                 seq = fLocSequence(session.stim_set, session.num_runs, session.task_num);
                 seq = make_runs(seq);
-                mkdir(fileparts(fpath));
+                if ~exist(fileparts(fpath), 'dir')
+                    mkdir(fileparts(fpath));
+                end
                 fprintf('saving to %s\n', fpath)
                 save(fpath, 'seq', '-v7.3');
                 session.sequence = seq;
@@ -161,21 +164,49 @@ classdef fLocSession
         
         % register input devices
         function session = find_inputs(session)
-            laptop_key = get_keyboard_num;
-            button_key = get_box_num;
-            if session.trigger == 1 && button_key ~= 0
-                session.keyboard = laptop_key;
-                session.input = button_key;
+
+            % MMH 2024: this is a more general way of finding devices
+            % without having to specify device number.
+            devices = PsychHID('Devices'); % all devices
+            % list all keyboard-like devices (indices into devices)
+            key_devices = GetKeyboardIndices(); 
+            
+            if length(key_devices)>1
+                laptop_index = key_devices(1);
+                button_index = key_devices(2);
+                fprintf('Found two devices:\n')
+                fprintf('Keyboard is:\n')
+                disp(devices(laptop_index).product)
+                fprintf('Button box is:\n')
+                disp(devices(button_index).product)
+                % locationID is the "port" the device is connected to.
+                % if it's the internal laptop keyboard, it should have
+                % smaller port number than USB connected device.
+%                 assert(devices(button_index).locationID>devices(laptop_index).locationID);
             else
-                session.keyboard = laptop_key;
-                session.input = laptop_key;
+                laptop_index = key_devices;
+                button_index = key_devices;
+                fprintf('Found one device:\n')
+                disp(devices(laptop_index).product)
             end
+
+
+            % MMH: Not using these functions anymore
+%             laptop_key = get_keyboard_num;
+%             button_key = get_box_num;
+%             if session.trigger == 1 && button_index ~= 0
+            session.keyboard = laptop_index;
+            session.input = button_index;
+%             else
+%                 session.keyboard = laptop_index;
+%                 session.input = laptop_index;
+%             end
         end
         
         % execute a run of the experiment
         function session = run_exp(session, run_num)
             % get timing information and initialize response containers
-            session = find_inputs(session); k = session.input;
+            session = find_inputs(session); %k = session.input;
             sdc = session.sequence.stim_duty_cycle;
             stim_dur = session.sequence.stim_dur;
             isi_dur = session.sequence.isi_dur;
@@ -268,13 +299,16 @@ classdef fLocSession
                 Screen('Flip', window_ptr);
                 % collect responses
                 ii_press = []; ii_keys = [];
-                [keys, ie] = record_keys(start_time + (ii - 1) * sdc, stim_dur, k, session.escape_key);
+                % MMH: monitor both the keyboard and button box here
+                [keys, ie] = record_keys(start_time + (ii - 1) * sdc, stim_dur, ...
+                    [session.keyboard, session.input], session.escape_key);
                 ii_keys = [ii_keys keys]; ii_press = [ii_press ie];
                 % display ISI if necessary
                 if isi_dur > 0
                     Screen('FillRect', window_ptr, bcol);
                     draw_fixation(window_ptr, center, fcol);
-                    [keys, ie] = record_keys(start_time + (ii - 1) * sdc + stim_dur, isi_dur, k, session.escape_key);
+                    [keys, ie] = record_keys(start_time + (ii - 1) * sdc + stim_dur, isi_dur, ...
+                        [session.keyboard, session.input], session.escape_key);
                     ii_keys = [ii_keys keys]; ii_press = [ii_press ie];
                     Screen('Flip', window_ptr);
                 end
@@ -353,7 +387,7 @@ classdef fLocSession
             conds = ['Baseline' session.sequence.stim_conds];
 %             cols = {[1 1 1] [0 0 1] [0 0 0] [1 0 0] [.8 .8 0] [0 1 0]};
             % MMH added an additional color here
-            cols = {[1 1 1] [0 0 1] [0 0 0] [1 0 0] [.8 .8 0] [0 1 0] [.8 0 .8]};
+            cols = {[1 1 1] [0 0 1] [0 0 0] [1 0 0] [.8 .8 0] [0 1 0] [.8 0 .8] [0 0.8 .8]};
             % write information about each block on a separate line
             for rr = 1:session.num_runs
                 block_onsets = session.sequence.block_onsets(:, rr);
