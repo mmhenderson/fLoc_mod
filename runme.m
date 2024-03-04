@@ -20,16 +20,18 @@ function runme()
 % Modified by MMH in 2024 (mmhender@cmu.edu)
 
 % Timing: 
-% If stim_set = 4 (for food, face, etc mapping)
+% If stim_set = 4 (for food, face, word, body, place mapping)
 %   240 seconds (4:00)
-% If stim_set = 5 (for LOC mapping)
+% If stim_set = 5 (for LOC mapping only)
 %   174 seconds (2:54)
+% If stim_set = 6 (for food, face, body, place, object)
+%   408 seconds (6:48)
 
 clear 
 
 % skipping sync tests for debugging (set to 0 when running real)
-Screen('Preference', 'SkipSyncTests', 1);
-% Screen('Preference', 'SkipSyncTests', 0);
+% Screen('Preference', 'SkipSyncTests', 1);
+Screen('Preference', 'SkipSyncTests', 0);
 
 % clear all; setenv('WAYLAND_DISPLAY'); Screen('Preference','ConserveVRAM', 2^19);
 
@@ -50,7 +52,7 @@ prompt = {'Subject Initials',...
 
 dlgtitle = 'Enter Run Parameters';
 dims = [1 35];
-definput = {'XX','0','5','1','4','1','0'};
+definput = {'XX','0','6','1','4','1','0'};
 answer = inputdlg(prompt,dlgtitle,dims,definput);
 name = answer{1};  
 trigger = str2double(answer{2});
@@ -62,7 +64,7 @@ debug = str2double(answer{7});
 
 % check values of these entries
 if ~ismember(trigger,[0:1]);  error('trigger must be 0 or 1');  end
-if ~ismember(stim_set,[1:5]); error('stim_set must be 1-5'); end
+if ~ismember(stim_set,[1:6]); error('stim_set must be 1-6'); end
 if ~ismember(task_num,[1:3]); error('task_num must be 1-3'); end
 if ~ismember(this_run,[1:24]); error('this_run must be 1-24'); end
 if ~ismember(debug,[0:1]); error('debug must be 0:1'); end
