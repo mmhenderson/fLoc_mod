@@ -26,6 +26,7 @@ classdef fLocSequence
         stim_set4 = {'food','body','word','adult','house'};
 %         stim_set5 = {'food','body','adult','house','car','scrambled'};
         stim_set5 = {'car','instrument','scrambled','scrambled'};
+        stim_set6 = {'food','body','adult','house','car','instrument','scrambled'};
         task_names = {'1back' '2back' 'oddball'};
         task_freq = 0.5;
     end
@@ -73,7 +74,7 @@ classdef fLocSequence
 
         % Modified MMH 2024: change num stimuli based on stim set
         function stim_per_set = get.stim_per_set(seq)
-            if (seq.stim_set==4)
+            if (seq.stim_set==4) || (seq.stim_set==6)
                 % this one has food included, which has max 80 images
                 stim_per_set = 80;
             else
@@ -86,13 +87,13 @@ classdef fLocSequence
         % get run duration given stimulus duty cycle
         function run_dur = get.run_dur(seq)
             block_dur = seq.stim_per_block * seq.stim_duty_cycle;
-            if length(seq.stim_conds)<=5
-                blocks_per_run = 1 + (1 + length(seq.stim_conds)) ^ 2 + 1;
-            else
-                % MMH 2024
-                % adjusting this, max of 6 reps per condition per run
-                blocks_per_run = 1 + (1 + length(seq.stim_conds)) * 6 + 1;
-            end
+%             if length(seq.stim_conds)<=5
+            blocks_per_run = 1 + (1 + length(seq.stim_conds)) ^ 2 + 1;
+%             else
+%                 % MMH 2024
+%                 % adjusting this, max of 6 reps per condition per run
+%                 blocks_per_run = 1 + (1 + length(seq.stim_conds)) * 6 + 1;
+%             end
             run_dur = block_dur * blocks_per_run;
         end
         
@@ -122,7 +123,9 @@ classdef fLocSequence
                 case 5
 %                     stim_set5 = {'car','instrument','scrambled','scrambled'};
                     stim_conds = {'Objects', 'Objects', 'Scrambled', 'Scrambled'}; 
-%                     stim_conds = {'Food', 'Bodies', 'Faces', 'Places', 'Objects', 'Scrambled'};                 
+                case 6
+%                     stim_set6 = {'food','body','adult','house','car','instrument','scrambled'};
+                    stim_conds = {'Food', 'Bodies', 'Faces', 'Places', 'Objects', 'Objects', 'Scrambled'};
             end
         end
 
@@ -152,6 +155,8 @@ classdef fLocSequence
                     run_sets = repmat(seq.stim_set4, seq.num_runs, 1);
                 case 5
                     run_sets = repmat(seq.stim_set5, seq.num_runs, 1);
+                case 6
+                    run_sets = repmat(seq.stim_set6, seq.num_runs, 1);
                 otherwise
                     error('Invalid stim_set argument.');
             end
