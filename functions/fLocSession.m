@@ -167,28 +167,35 @@ classdef fLocSession
 
             % MMH 2024: this is a more general way of finding devices
             % without having to specify device number.
-            devices = PsychHID('Devices'); % all devices
-            % list all keyboard-like devices (indices into devices)
-            key_devices = GetKeyboardIndices(); 
+%             devices = PsychHID('Devices'); % all devices
+%             % list all keyboard-like devices (indices into devices)
+%             key_devices = GetKeyboardIndices(); 
             
-            if length(key_devices)>1
-                laptop_index = key_devices(1);
-                button_index = key_devices(2);
-                fprintf('Found two devices:\n')
-                fprintf('Keyboard is:\n')
-                disp(devices(laptop_index).product)
-                fprintf('Button box is:\n')
-                disp(devices(button_index).product)
-                % locationID is the "port" the device is connected to.
-                % if it's the internal laptop keyboard, it should have
-                % smaller port number than USB connected device.
-%                 assert(devices(button_index).locationID>devices(laptop_index).locationID);
-            else
-                laptop_index = key_devices;
-                button_index = key_devices;
-                fprintf('Found one device:\n')
-                disp(devices(laptop_index).product)
-            end
+            % Workaround for linux platform differences.
+            % If we specify -1 here for device number, it just searches on
+            % all devices for responses using default PTB settings.
+            % this actually should work fine.
+            laptop_index = -1;
+            button_index = -1;
+% 
+%             if length(key_devices)>1
+%                 laptop_index = key_devices(1);
+%                 button_index = key_devices(2);
+%                 fprintf('Found two devices:\n')
+%                 fprintf('Keyboard is:\n')
+%                 disp(devices(laptop_index).product)
+%                 fprintf('Button box is:\n')
+%                 disp(devices(button_index).product)
+%                 % locationID is the "port" the device is connected to.
+%                 % if it's the internal laptop keyboard, it should have
+%                 % smaller port number than USB connected device.
+% %                 assert(devices(button_index).locationID>devices(laptop_index).locationID);
+%             else
+%                 laptop_index = key_devices;
+%                 button_index = key_devices;
+%                 fprintf('Found one device:\n')
+%                 disp(devices(laptop_index).product)
+%             end
 
 
             % MMH: Not using these functions anymore
