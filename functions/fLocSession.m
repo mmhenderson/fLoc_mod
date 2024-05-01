@@ -361,8 +361,9 @@ classdef fLocSession
             score_str = [hit_str '\n' fa_str];
             DrawFormattedText(window_ptr, score_str, 'center', 'center', tcol);
             Screen('Flip', window_ptr);
-            % MMH changed this: can exit with trigger, space bar, esc
-            get_key([session.trigger_key, KbName(session.escape_key), KbName(session.space_key)], ...
+            % MMH changed this: can exit with space bar, esc
+            % Changed 5/1/2024: the trigger key will NOT quit experiment.
+            get_key([KbName(session.escape_key), KbName(session.space_key)], ...
                 session.keyboard, session.escape_key);
             ShowCursor;
             Screen('CloseAll');
