@@ -249,7 +249,8 @@ classdef fLocSession
             if session.trigger == 0
                 Screen('FillRect', window_ptr, bcol);
                 Screen('Flip', window_ptr);
-                DrawFormattedText(window_ptr, session.instructions, 'center', 'center', tcol);
+                draw_fixation(window_ptr, center, fcol);
+%                 DrawFormattedText(window_ptr, session.instructions, 'center', 'center', tcol);
                 Screen('Flip', window_ptr);
                 get_key(session.trigger_key, session.keyboard, session.escape_key);
             elseif session.trigger == 1
