@@ -1,7 +1,8 @@
-function [keys, is_empty] = record_keys(start_time, dur, device_num, escape_key)
+function [keys, is_empty] = record_keys(start_time, dur, device_num, escape_key, trigger_key)
 % Collects all keypresses for a given duration (in secs).
 % Written by KGS Lab
 % Edited by AS 8/2014
+% Edited by MMH 2024
 
 % wait until keys are released
 keys = [];
@@ -21,6 +22,14 @@ while 1
     if ismember(escape_key, key_index)
         escape_response()
     end
+
+    % MMH 2024 adding this: if pressed key is the trigger key, ignore it.
+    trigger_ind = KbName(trigger_key);
+    key_code(trigger_ind) = 0;
+    % note that key_code can have multiple elements true.
+    % so if something else was pressed besides trigger, we'll still look at that.
+    % but if only trigger, then we treat it as no press.
+    key_is_down = any(key_code);
 
     if key_is_down
         keys = [keys KbName(key_code)];

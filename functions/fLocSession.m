@@ -308,14 +308,14 @@ classdef fLocSession
                 ii_press = []; ii_keys = [];
                 % MMH: monitor both the keyboard and button box here
                 [keys, ie] = record_keys(start_time + (ii - 1) * sdc, stim_dur, ...
-                    [session.keyboard, session.input], session.escape_key);
+                    [session.keyboard, session.input], session.escape_key, session.trigger_key);
                 ii_keys = [ii_keys keys]; ii_press = [ii_press ie];
                 % display ISI if necessary
                 if isi_dur > 0
                     Screen('FillRect', window_ptr, bcol);
                     draw_fixation(window_ptr, center, fcol);
                     [keys, ie] = record_keys(start_time + (ii - 1) * sdc + stim_dur, isi_dur, ...
-                        [session.keyboard, session.input], session.escape_key);
+                        [session.keyboard, session.input], session.escape_key, session.trigger_key);
                     ii_keys = [ii_keys keys]; ii_press = [ii_press ie];
                     Screen('Flip', window_ptr);
                 end

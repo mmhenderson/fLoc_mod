@@ -31,8 +31,10 @@ clear
 
 % skipping sync tests for debugging (set to 0 when running real)
 % Screen('Preference', 'SkipSyncTests', 1);
+% changing synctest settings - this enables us to test on Macbook 
+% without fatal errors
+Screen('Preference','SyncTestSettings' ,0.01); %maxStddev in sec
 Screen('Preference', 'SkipSyncTests', 0);
-
 % clear all; setenv('WAYLAND_DISPLAY'); Screen('Preference','ConserveVRAM', 2^19);
 
 %% add paths and check inputs
