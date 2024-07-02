@@ -19,6 +19,7 @@ classdef fLocSession
 %     properties (Hidden)
         input     % device number of input used for resonse collection
         keyboard  % device number of native computer keyboard
+        start_time% session start time
     end
     
     properties (Constant)
@@ -28,7 +29,9 @@ classdef fLocSession
         % these are actual measurements of screen size/distance in our
         % setup. may need to change for different recording setups.
         % these measures are from JP, for BOLDscreen at UW Prisma
-        view_dist_inches = 120 / 2.54; 
+%         view_dist_inches = 120 / 2.54; 
+        view_dist_inches = 139 / 2.54; % for eyelink setup
+%         view_dist_inches = 120 / 2.54; 
         screen_height_inches = 39.29 / 2.54;
         % desired size in degrees 
         % (this is the whole image height, top to bottom).
@@ -91,6 +94,7 @@ classdef fLocSession
             session.hit_cnt = zeros(1, session.num_runs);
             session.fa_cnt = zeros(1, session.num_runs);
             session.runs_done = 0; % count how many runs done so far
+            session.start_time = datestr(now,'HHMMSS'); % mark when the session starts (first run)
         end
         
         % get session-specific id string
