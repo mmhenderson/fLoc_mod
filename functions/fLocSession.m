@@ -29,9 +29,9 @@ classdef fLocSession
         % these are actual measurements of screen size/distance in our
         % setup. may need to change for different recording setups.
         % these measures are from JP, for BOLDscreen at UW Prisma
-%         view_dist_inches = 120 / 2.54; 
-        view_dist_inches = 139 / 2.54; % for eyelink setup
-%         view_dist_inches = 120 / 2.54; 
+        view_dist_inches = 139 / 2.54; % nearer distance, from Eduardo
+%         view_dist_inches = 150 / 2.54; % further distance, from Eduardo
+%         view_dist_inches = 120 / 2.54; % old measurement, from John Pyles
         screen_height_inches = 39.29 / 2.54;
         % desired size in degrees 
         % (this is the whole image height, top to bottom).
